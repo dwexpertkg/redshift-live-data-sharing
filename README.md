@@ -154,7 +154,8 @@ Reconnect to the consumer cluster DB, redshift using the user created above and 
 1. [Amazon Redshift Data Sharing Workflow](https://www.youtube.com/watch?v=EXioFirlrnA)
 2. [Amazon Redshift Data Sharing Use Cases](https://www.youtube.com/watch?v=sIoTB8B5nn4)
 3. [AWS on Air 2020: Amazon Redshift Data Sharing and Isolation](https://www.youtube.com/watch?v=zK5X8ARsKDM)
-
+4. [Announcing Amazon Redshift data sharing (preview)](https://aws.amazon.com/blogs/big-data/announcing-amazon-redshift-data-sharing-preview/)
+5. [Sharing Amazon Redshift data securely across Amazon Redshift clusters for workload isolation](https://aws.amazon.com/blogs/big-data/sharing-amazon-redshift-data-securely-across-amazon-redshift-clusters-for-workload-isolation/)
 
 ----
 
