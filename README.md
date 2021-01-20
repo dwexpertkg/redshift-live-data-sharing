@@ -28,7 +28,7 @@ The [announcement blog](https://aws.amazon.com/blogs/big-data/announcing-amazon-
 2. Amazon Redshift data sharing doesn't support concurrency scaling for queries that query for shared objects.
 3. Amazon Redshift data sharing doesn't support cross account data share as yet but the preview will be out soon.
 4. CloudFormation does not support ra3.xlplus instances
-5. Need to use a cross database query notation ( <shareddatabase>.<schema>.<object> )
+5. Need to use a cross database query notation (\<shareddatabase\>.\<schema\>.\<object\>)
 6. Currently  the live data sharing will not work if the producer cluster is paused or under maintenance. But this feature will also preview soon.
 
 ----
