@@ -1,4 +1,4 @@
-# Query live data in centralized Redshift Cluster from another cluster using the data sharing feature (preview)
+# Query live data in centralized Redshift Cluster from another cluster using the data sharing feature
 
 [Amazon Redshift](https://aws.amazon.com/redshift/) is a fast, scalable, secure, and fully managed cloud data warehouse that makes it simple and cost-effective to analyze all your data using standard SQL. Amazon Redshift offers up to 3x better price performance than any other cloud data warehouse. Tens of thousands of customers use Amazon Redshift to process exabytes of data per day and power analytics workloads such as high-performance business intelligence (BI) reporting, dashboarding applications, data exploration, and real-time analytics. With [data sharing](https://docs.aws.amazon.com/redshift/latest/dg/datashare-overview.html), you can securely and easily share live data across Amazon Redshift clusters for read purposes. Data sharing improves the agility of your organization by giving you instant, granular, and high-performance access to data across Amazon Redshift clusters without your needing to manually copy or move it. With data sharing, you have live access to data so that your users can see the most up-to-date and consistent information as it's updated in Amazon Redshift clusters.  
 
@@ -16,7 +16,7 @@ In order for us to build this solution we need to do the following.
 
 ## Solution Architecture
 
-The [announcement blog](https://aws.amazon.com/blogs/big-data/announcing-amazon-redshift-data-sharing-preview/) does explains how the live data sharing works between 2 redshift clusters, and typical use cases.
+The [announcement blog](https://aws.amazon.com/blogs/big-data/announcing-amazon-redshift-data-sharing-preview/) does explains how the live data sharing works between 2 redshift clusters, and typical use cases. [This feature is generally available](https://aws.amazon.com/about-aws/whats-new/2021/03/announcing-general-availability-of-amazon-redshift-data-sharing/) as of March 10, 2021. [As of April 30,2021 Amazon Redshift announces *preview* of cross-account data sharing](https://aws.amazon.com/about-aws/whats-new/2021/04/amazon-redshift-announces-preview-of-cross-account-data-sharing/).
 
 ## Pre-requisites
 - [Create AWS Account](https://aws.amazon.com/premiumsupport/knowledge-center/create-and-activate-aws-account/)
@@ -24,12 +24,12 @@ The [announcement blog](https://aws.amazon.com/blogs/big-data/announcing-amazon-
 
 ## Things to be aware of
 
-1. Amazon Redshift data sharing doesn't support sharing stored procedures or Python user-defined functions. Only SQL user-defined functions are supported.
-2. Amazon Redshift data sharing doesn't support concurrency scaling for queries that query for shared objects.
-3. Amazon Redshift data sharing doesn't support cross account data share as yet but the preview will be out soon.
-4. CloudFormation does not support ra3.xlplus instances
-5. Need to use a cross database query notation (\<shareddatabase\>.\<schema\>.\<object\>)
-6. Currently  the live data sharing will not work if the producer cluster is paused or under maintenance. But this feature will also preview soon.
+1. [Limitations for data sharing](https://docs.aws.amazon.com/redshift/latest/dg/limitations-datashare.html)
+2. CloudFormation does not support ra3.xlplus instances
+3. Need to use a cross database query notation (\<shareddatabase\>.\<schema\>.\<object\>)
+4. As of April 12, 2021 [Amazon Redshift now supports data sharing when producer clusters are paused](https://aws.amazon.com/about-aws/whats-new/2021/04/amazon-redshift-supports-data-sharing-producer-clusters-paused/)
+5. For the cross-account data sharing preview feature both the producer and consumer cluster needs to be in _Preview_ _Maintenance track_. 
+6. For cross-account data sharing, both the producer and consumer cluster must be encrypted.
 
 ----
 
@@ -120,42 +120,78 @@ Use the [Redshift Query Editor](https://aws.amazon.com/blogs/big-data/query-your
 
 ----
 
-## 5. Upload test data, crate tables, copy data
+## 5. Encrypt Producer and Consumer Clusters for cross account sharing
 
-After logging in to the producer cluster, use the [link](https://docs.aws.amazon.com/redshift/latest/dg/tutorial-loading-data-create-tables.html)
+For both Producer and Consumer cluster navigate to Redshift console, from **CLUSTERS** click on the right cluster and select the **Properties** tab. Click on **Edit** drop down to choose **Edit encryption**.
+![Encrypt_Clusters](images/Encrypt_Clusters.png)
+
+Choose a preferred encryption option and select **Save changes** to encrypt the cluster as shown below.
+![Choose_encrypt_option](images/Choose_encrypt_option.png)
+
+----
+
+## 6. Upload test data, crate tables, copy data
+
+Post encryption and after logging in to the producer cluster, use the [link](https://docs.aws.amazon.com/redshift/latest/dg/tutorial-loading-data-create-tables.html)
 
 * Step 1 : Download the data file from [here](https://docs.aws.amazon.com/redshift/latest/dg/tutorial-loading-data-download-files.html)
 * Step 2 : Upload the test files to the S3 bucket as indicated by the key, _*RedshiftS3Bucket*_ in the _*Outputs*_ tab of the producer cloudformation stack. Create folders, _*customer-fw*_, _*dwdate-tab*_, _*part-csv*_ for their respective files. 
 * Step 3 : Run [create_sample_tables.sql](sqls/create_sample_tables.sql) to create the sample tables.
-* Step 4 : Get the S3 bucket and IAM Role as indicated by the keys _*RedshiftS3Bucket*_, _*RedshiftCopyIAMRole*_ in the _*Outputs*_ tab of the producer cloudformation stack. Run [copy_sample_tables.sql](sqls/copy_sample_tables.sql) to copy the sample tables.
-
+* Step 4 : Get the S3 bucket and IAM Role as indicated by the keys _*RedshiftS3Bucket*_, _*RedshiftCopyIAMRole*_ in the _*Outputs*_ tab of the producer cloudformation stack. Run [copy_sample_tables.sql](sqls/copy_sample_tables.sql) to copy the sample tables. _While running the copy command for *customer* table do not forget to update the manifest file with the actual s3 bucket name._
 
 ----
 
-## 6. Create Share in the producer cluster
+## 7. Create Share in the producer cluster
 
 From the Redshift dashboard, click the _*CLUSTERS*_ side bar to list the clusters and get the _*Cluster namespace*_ of the consumer cluster.
 ![Cluster_Namespace](images/Cluster_Namespace.png)
 
 Run the [create_share.sql](sqls/create_share.sql) in the producer cluster with the consumer _*Cluster namespace*_ to create a share and provide access to the consumer cluster.
 
+If the consumer is in a different account then the producer cluster administrator needs to authorize. In order to do that, click in "DATASHARES" in the [Amazon Redshift console](https://console.aws.amazon.com/redshift/) to locate and click on the data share.
+![Locate_datashare_name](images/Locate_datashare_name.png)
+
+Click on **_Authorize_** button.
+
+![Authorize_Datashare](images/Authorize_Datashare.png)
+
+**_Consumer status_** will change to **_Authorized_**.
+
+![Authorized_Datashare](images/Authorized_Datashare.png)
+
 ----
 
-## 7. Query the share from consumer
+## 8. Query the share from consumer
 
-Note the producer _*Cluster namespace*_ and run [consume_share.sql](sqls/consume_share.sql) in the consumer cluster to verify access of the share, create DB on the share, and a user.
+Note the producer _*Cluster namespace*_ 
+If the producer is in a different account then the consumer cluster administrator needs to associate one or more data shares that are shared from other accounts to your entire AWS account. In order to do that, click in "DATASHARES" in the [Amazon Redshift console](https://console.aws.amazon.com/redshift/) to locate and click on the data share.
+![Locate_datashare_name_consumer](images/Locate_datashare_name_consumer.png)
+
+Click on **_Associate_** button to 
+* Associate the entire AWS account
+* Choose specific cluster namespaces
+
+Make a choice and click **Accept**.
+![Associate_Datashare](images/Associate_Datashare.png)
+
+The **Datashare status** will change to _**Active**_.
+![Associate_Datashare_Active](images/Associate_Datashare_Active.png)
+
+Run [consume_share.sql](sqls/consume_share.sql) in the consumer cluster to verify access of the share, create DB on the share, and a user.
 
 Reconnect to the consumer cluster DB, redshift using the user created above and run [query_consumer_share_db.sql](sqls/query_consumer_share_db.sql) to verify that the DB user can query the shared DB.
 
 ----
 
-## 8. Resources
+## 9. Resources
 
 1. [Amazon Redshift Data Sharing Workflow](https://www.youtube.com/watch?v=EXioFirlrnA)
 2. [Amazon Redshift Data Sharing Use Cases](https://www.youtube.com/watch?v=sIoTB8B5nn4)
 3. [AWS on Air 2020: Amazon Redshift Data Sharing and Isolation](https://www.youtube.com/watch?v=zK5X8ARsKDM)
 4. [Announcing Amazon Redshift data sharing (preview)](https://aws.amazon.com/blogs/big-data/announcing-amazon-redshift-data-sharing-preview/)
 5. [Sharing Amazon Redshift data securely across Amazon Redshift clusters for workload isolation](https://aws.amazon.com/blogs/big-data/sharing-amazon-redshift-data-securely-across-amazon-redshift-clusters-for-workload-isolation/)
+6. [Amazon Redshift announces preview of cross-account data sharing](https://aws.amazon.com/about-aws/whats-new/2021/04/amazon-redshift-announces-preview-of-cross-account-data-sharing/)
+7. [Getting started data sharing using the SQL interface](https://docs.aws.amazon.com/redshift/latest/dg/getting-started-datashare-sql.html)
 
 ----
 

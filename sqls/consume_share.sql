@@ -3,9 +3,16 @@ Select * from svv_datashare_objects; -- what objects have been shared in the inb
 
 --Go ahead and make some changes to the producer
 
---Create a local database and schema reference to the share objects
+--Create a local database and schema reference to the share objects when producer and consumer within SAME account
 CREATE DATABASE consumer_sales FROM DATASHARE SalesShare
 of NAMESPACE '<Producer Name Space>';
+
+-- OR
+
+--Create a local database and schema reference to the share objects when producer and consumer in DIFFERENT account
+CREATE DATABASE consumer_sales FROM DATASHARE SalesShare
+of ACCOUNT '<Producer Account Number>' NAMESPACE '<Producer Name Space>';
+
 
 --Create a db user, choose and remember password
 create user awsuser with password '<Some Password>';

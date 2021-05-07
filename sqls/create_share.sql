@@ -12,6 +12,11 @@ ALTER DATASHARE SalesShare ADD TABLE public.lineorder;
 --Add consumers within account different vpc
 GRANT USAGE ON DATASHARE SalesShare TO NAMESPACE '<Consumer Name Space>';
 
+-- OR
+
+-- Add consumers in different account in the same region
+GRANT USAGE ON DATASHARE SalesShare TO ACCOUNT '<Consumer Account Number>';
+
 --VALIDATION
 Select * from svv_datashares; -- every datashare object that is associated with this cluster.
 Select * from svv_datashare_objects; -- what objects have been shared in the outbound  share
